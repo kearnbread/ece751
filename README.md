@@ -5,23 +5,23 @@ RTL development for parameterized KV cache
 
 This repository contains the initial RTL framework for our mixed-precision KV cache project.
 
-To get things moving quickly, I set up this repo and added some starter skeleton modules to give us structure and direction. The initial code was generated with assistance from ChatGPT to help bootstrap the architecture (top-level wiring, parameterization, memory model, etc.), since I didn’t have time to design everything from scratch.
+To get us moving quickly, I set up the repo and generated a starter skeleton using an LLM to help scaffold the basic module structure (top-level wiring, parameterization, memory model, etc.). The goal was simply to avoid starting from a blank slate and to give us something concrete to iterate on.
 
-This is **not final design code** — it’s a starting point. We should review everything together and refine:
+This is just a starting point — we’ll review, modify, and refine everything together as we define:
 
-- Interface definitions  
+- Interface structure  
 - Address generation strategy  
 - Metadata handling  
 - Format abstraction (FP16 / INT8 / INT4)  
 - Performance counters and measurement hooks  
 
-The goal right now is to establish a clean, parameterized hardware framework so we can evaluate:
+The focus right now is building a clean, parameterized KV cache model that lets us evaluate:
 
 - Memory footprint tradeoffs  
 - Bandwidth requirements  
 - Latency and cycle cost  
 - Metadata overhead  
 
-Quantization arithmetic is intentionally abstracted for now and can be added later once the Python model is finalized.
+From here, we can shape the architecture to match our final design decisions and integrate whatever quantization strategy the Python model team settles on.
 
-Let’s treat this as a foundation we’ll iterate on and make fully our own.
+Let’s use this as a foundation and build it into our own implementation.
