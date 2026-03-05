@@ -32,6 +32,54 @@ Z5 !s108 1772655532.000000
 !i113 1
 Z6 o-work work -sv
 Z7 tCvgOpt 0
+vkv_bank
+R1
+!s110 1772725936
+!i10b 1
+!s100 mI>2N<YNAEWEf;EQel4ie1
+IdLC2QzUm]lnL1E^`m=lN=0
+R3
+!s105 kv_bank_sv_unit
+S1
+R0
+w1772725912
+8C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_bank.sv
+FC:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_bank.sv
+L0 1
+R4
+r1
+!s85 0
+31
+Z8 !s108 1772725936.000000
+!s107 C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_bank.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_bank.sv|
+!i113 1
+R6
+R7
+vkv_cache
+R1
+Z9 !s110 1772725937
+!i10b 1
+!s100 >d`0gc27D7SDi=bPkg@[c1
+IQHzW3F6fiJhc@A=6;80=:0
+R3
+!s105 kv_cache_sv_unit
+S1
+R0
+w1772725892
+8C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_cache.sv
+FC:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_cache.sv
+L0 1
+R4
+r1
+!s85 0
+31
+R8
+!s107 C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_cache.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_cache.sv|
+!i113 1
+R6
+R7
 vkv_cache_top
 R1
 !s110 1772655532
@@ -56,6 +104,30 @@ R5
 !i113 1
 R6
 R7
+vkv_dequant
+R1
+R9
+!i10b 1
+!s100 ]S?653=gE6lThBL_6PeLe1
+I9hNIkFZUil;c:F86d_jK60
+R3
+!s105 kv_dequant_sv_unit
+S1
+R0
+w1772725929
+8C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_dequant.sv
+FC:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_dequant.sv
+L0 1
+R4
+r1
+!s85 0
+31
+!s108 1772725937.000000
+!s107 C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_dequant.sv|
+!s90 -reportprogress|300|-work|work|-sv|-stats=none|C:\Users\kearn\Downloads\ece751\project\kv-cache\verilog\kv_dequant.sv|
+!i113 1
+R6
+R7
 vkv_format_adapter
 R1
 R2
@@ -74,7 +146,7 @@ R4
 r1
 !s85 0
 31
-Z8 !s108 1772655533.000000
+Z10 !s108 1772655533.000000
 !s107 C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_format_adapter.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_format_adapter.sv|
 !i113 1
@@ -98,7 +170,7 @@ R4
 r1
 !s85 0
 31
-R8
+R10
 !s107 C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_metadata_store.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_metadata_store.sv|
 !i113 1
@@ -122,7 +194,7 @@ R4
 r1
 !s85 0
 31
-R8
+R10
 !s107 C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_perf_counters.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_perf_counters.sv|
 !i113 1
@@ -146,7 +218,7 @@ R4
 r1
 !s85 0
 31
-R8
+R10
 !s107 C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_sram_model.sv|
 !s90 -reportprogress|300|-work|work|-sv|-stats=none|C:/Users/kearn/Downloads/ece751/project/kv-cache/verilog/kv_sram_model.sv|
 !i113 1
