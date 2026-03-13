@@ -1,416 +1,491 @@
-# KV Cache Accelerator RTL (Prototype)
+# KV Cache with Mixed-Precision Quantization (SystemVerilog)
 
 ## Overview
 
-This repository contains an **RTL prototype of a multi-head KV cache subsystem** intended for transformer inference accelerators. The design supports **mixed-precision KV storage** (FP16 / INT8 / INT4) with **per-token per-head scaling** and a **streaming read interface** suitable for attention decode.
+This project implements a **parameterizable KV cache architecture for transformer inference accelerators**. The design supports **mixed precision per attention head** and includes infrastructure for **quantized storage of Key/Value vectors**.
 
-The goal is to model the behavior of a **hardware KV cache used in LLM accelerators**, where keys and values are stored in SRAM and streamed into the attention pipeline.
+The goal of the architecture is to reduce **memory footprint and bandwidth** during autoregressive inference by storing KV vectors in **INT8 or INT4** instead of full **FP16**, while preserving compatibility with FP16 compute units.
 
-The current implementation focuses on:
+The system currently includes:
 
-* Efficient **KV cache storage**
-* **Per-head precision support**
-* **Streaming decode reads**
-* **Dequantization preparation**
+* `kv_cache` — main storage module
+* `kv_bank` — per-head memory bank
+* `kv_quant` — quantization module (simplified implementation)
+* `kv_cache_tb` — verification testbench with deterministic stimulus
 
-Future work will integrate the cache with a **GEMM / attention pipeline model**.
-
----
-
-# Implemented Modules
-
-## `kv_bank.sv`
-
-### Purpose
-
-Implements the **storage for a single attention head**.
-
-Each bank stores tokens for one head and supports **packing multiple tokens per SRAM line** depending on precision.
-
-### Features
-
-* Parameterized `HEAD_DIM`
-* Parameterized `MAX_TOKENS`
-* Precision modes:
-
-  * FP16
-  * INT8
-  * INT4
-* Token packing per line:
-
-| Precision | Tokens per Line |
-| --------- | --------------- |
-| FP16      | 1               |
-| INT8      | 2               |
-| INT4      | 4               |
-
-### Responsibilities
-
-Write:
-
-* Accept token vectors
-* Pack tokens into SRAM lines
-
-Read:
-
-* Extract token slot from packed line
-* Output quantized vector + scale
-
-### Outputs
-
-```
-rd_vector
-rd_scale
-```
+The design supports **per-head precision configuration** and **per-token scaling factors**, matching the structure used in many modern LLM inference systems.
 
 ---
 
-# `kv_cache.sv`
+# Architecture
 
-### Purpose
+## KV Cache in Transformer Inference
 
-Instantiates **one `kv_bank` per head**.
+In autoregressive transformers, the **Key and Value vectors from previous tokens must be stored** so they can be reused when computing attention for new tokens.
 
-This module manages:
-
-* Parallel writes across heads
-* Streaming reads across tokens
-* Head-level parallelism
-
-### Architecture
+For a sequence of tokens:
 
 ```
-HEAD 0 -> kv_bank
-HEAD 1 -> kv_bank
-HEAD 2 -> kv_bank
-...
-HEAD N -> kv_bank
-```
-
-### Key Design Choices
-
-1. **All heads can be written simultaneously**
-
-```
-wr_vector [0:NUM_HEADS-1]
-```
-
-Each head receives its own vector input.
-
-2. **Per-head precision**
-
-```
-parameter PRECISION [0:NUM_HEADS-1]
-```
-
-Allows heterogeneous precision across heads.
-
-3. **Streaming decode reads**
-
-The module contains a small FSM that produces:
-
-```
-token t
-token t+1
-token t+2
+Token0 → K0,V0 stored
+Token1 → K1,V1 stored
+Token2 → K2,V2 stored
 ...
 ```
 
-for the requested sequence length.
+When computing attention for token *t*, the model must read:
+
+```
+K0...Kt
+V0...Vt
+```
+
+This means memory grows linearly with sequence length.
+
+Because these vectors are large, **KV cache storage dominates memory usage during inference**.
+
+Typical dimensions:
+
+```
+num_heads = 32
+head_dim  = 128
+sequence  = 4096 tokens
+precision = FP16 (2 bytes)
+```
+
+Memory required:
+
+```
+32 * 128 * 4096 * 2 ≈ 32 MB per layer
+```
+
+Quantization reduces this dramatically.
 
 ---
 
-# `kv_cache_top.sv`
+# Quantized KV Cache
 
-### Purpose
-
-Top-level wrapper that instantiates:
+Instead of storing FP16 values, vectors are stored as:
 
 ```
-Key cache
-Value cache
+quantized_vector
+scale
 ```
 
-### Structure
+Later reconstruction approximates the original value:
 
 ```
-kv_cache_top
- ├── kv_cache (KEYS)
- └── kv_cache (VALUES)
+x ≈ q * scale
 ```
 
-The module routes writes to the appropriate cache and provides synchronized read outputs.
+Where:
 
-### Responsibilities
+```
+x = original FP16 value
+q = quantized INT8 / INT4 value
+scale = FP16 scaling factor
+```
 
-* Select K or V cache during write
-* Broadcast read control to both caches
-* Output K/V streams to downstream compute
+Quantization reduces memory usage:
+
+| Precision | Bits | Memory Reduction |
+| --------- | ---- | ---------------- |
+| FP16      | 16   | baseline         |
+| INT8      | 8    | 2× smaller       |
+| INT4      | 4    | 4× smaller       |
 
 ---
 
-# `kv_dequant.sv`
+# Per-Head Mixed Precision
 
-### Purpose
+Different heads may use different precision levels.
 
-Converts quantized KV cache values back to **16-bit lanes** for compute units.
+Example configuration:
 
-### Behavior
+```
+HEAD 0 → FP16
+HEAD 1 → INT8
+HEAD 2 → INT8
+HEAD 3 → INT4
+```
 
-| Input Precision | Operation    |
-| --------------- | ------------ |
-| FP16            | pass-through |
-| INT8            | sign extend  |
-| INT4            | sign extend  |
+This is controlled by the parameter:
 
-The module **does not apply scale multiplication**.
+```
+PRECISION[NUM_HEADS]
+```
 
-Scaling is expected to occur inside the **attention compute pipeline**.
+Encoding:
 
-### Why
+```
+0 → FP16
+1 → INT8
+2 → INT4
+```
 
-Avoids inserting many multipliers in the memory read path.
+Mixed precision allows trading accuracy for memory savings.
 
 ---
 
-# Current Dataflow
+# Per-Token Scaling
 
-## Write Path
+Quantization scale is computed **per head per token**.
+
+Why per-token?
+
+Vector magnitude can vary significantly between tokens.
+
+Example:
 
 ```
-Transformer block
+Token0: values ≈ 0.01
+Token1: values ≈ 2.5
+Token2: values ≈ 0.3
+```
+
+Using a single scale across all tokens would introduce large error.
+
+Instead we compute:
+
+```
+scale = max(|x_i|) / QMAX
+```
+
+Where:
+
+```
+QMAX = 127 for INT8
+QMAX = 7 for INT4
+```
+
+This scale is stored in the cache alongside the quantized vector.
+
+---
+
+# System Dataflow
+
+The overall pipeline:
+
+```
+Attention Output (FP16)
+        │
+        ▼
+      kv_quant
+        │
+        ├── quantized vector
+        └── scale
+        │
+        ▼
+      kv_cache
+        │
+        ├── vector_mem[head][token]
+        └── scale_mem[head][token]
+```
+
+During attention computation:
+
+```
+kv_cache read
       │
       ▼
-kv_cache_top
+dequantization
       │
       ▼
-kv_cache (per-head banks)
-      │
-      ▼
-kv_bank SRAM storage
+FP16 attention math
 ```
 
 ---
 
-## Read Path (Decode)
+# kv_cache Module
+
+## Purpose
+
+Stores quantized KV vectors and their associated scale values.
+
+Each attention head is implemented as an independent **bank**.
+
+## Parameters
 
 ```
-kv_bank
-   │
-   ▼
-kv_cache
-   │
-   ▼
-kv_cache_top
-   │
-   ▼
-kv_dequant
-   │
-   ▼
-Attention compute pipeline (future)
+NUM_HEADS
+HEAD_DIM
+MAX_TOKENS
+PRECISION[NUM_HEADS]
 ```
+
+## Write Interface
+
+```
+wr_valid
+wr_token
+wr_vector[NUM_HEADS]
+wr_scale[NUM_HEADS]
+```
+
+A write stores the vector and scale for the specified token.
+
+## Read Interface
+
+```
+rd_req
+rd_start_token
+rd_len
+```
+
+Outputs vectors sequentially for attention computation.
 
 ---
 
-# What Still Needs to Be Built
+# kv_bank Module
 
-## 1. Cache Wrapper Interface
-
-A wrapper module should connect the KV cache to the **accelerator top-level**.
-
-Suggested module:
-
-```
-kv_cache_wrapper.sv
-```
+Each head has its own memory bank.
 
 Responsibilities:
 
-* Interface with transformer pipeline
-* Accept new K/V tokens
-* Trigger decode reads
-* Deliver vectors to compute
+* store vectors
+* store scale values
+* implement token indexing
+* pack vectors based on precision
 
-Example interface:
+### Line Width
 
-```
-write_k_valid
-write_v_valid
-write_token
-write_head_vectors
-
-read_request
-read_start_token
-read_length
-```
-
----
-
-## 2. Attention Compute / GEMM Pipeline
-
-A simplified compute model should be added to simulate attention behavior.
-
-Possible implementations:
-
-### Option A (Recommended)
-
-Behavioral GEMM pipeline
+Internal line width is:
 
 ```
-Q × K^T
-softmax
-attention × V
+LINE_WIDTH = HEAD_DIM * 16
 ```
 
-This can be implemented with:
+This represents the **maximum width if stored in FP16**.
 
-* simple matrix multipliers
-* pipeline registers
-
-Goal is **functional simulation**, not final hardware.
-
----
-
-### Option B
-
-Stub module
+### Tokens per Line
 
 ```
-attention_pipeline_stub.sv
+PRECISION = FP16 → 1 token per line
+PRECISION = INT8 → 2 tokens per line
+PRECISION = INT4 → 4 tokens per line
 ```
 
-Outputs random or deterministic values while verifying:
-
-* bandwidth
-* read ordering
-* timing
-
----
-
-## 3. Scale Application
-
-A future stage should apply the quantization scale.
-
-Suggested module:
+Computed as:
 
 ```
-kv_scale_apply.sv
+TOKENS_PER_LINE =
+    FP16 → 1
+    INT8 → 2
+    INT4 → 4
 ```
 
-```
-extended_vector × scale
-```
-
-This stage should sit **inside the compute pipeline**, not inside the cache.
-
----
-
-## 4. Prefill Mode
-
-Current implementation primarily targets **decode streaming**.
-
-Prefill support could include:
-
-* burst writes
-* larger read bursts
-* higher bandwidth modes
-
----
-
-## 5. Testbench
-
-Recommended testbench hierarchy:
+Slot width:
 
 ```
-tb/
- ├── tb_kv_bank.sv
- ├── tb_kv_cache.sv
- ├── tb_kv_cache_top.sv
-```
-
-Tests should verify:
-
-* FP16 writes/reads
-* INT8 packing
-* INT4 packing
-* token extraction
-* multi-head parallel writes
-* streaming decode
-
----
-
-# Possible Future Optimizations
-
-### XOR-based KV compression
-
-### SRAM banking for higher throughput
-
-### Burst decode reads
-
-### Double-buffered KV banks
-
-### Prefetch logic
-
----
-
-# Example System Diagram
-
-```
-               +----------------------+
-               |  Transformer Block   |
-               +----------+-----------+
-                          |
-                          v
-                +-------------------+
-                |   kv_cache_top    |
-                +---------+---------+
-                          |
-        +-----------------+-----------------+
-        |                                   |
-        v                                   v
-  +------------+                     +------------+
-  | kv_cache K |                     | kv_cache V |
-  +------------+                     +------------+
-        |                                   |
-        v                                   v
-     kv_bank                             kv_bank
-   (per head)                         (per head)
-        |                                   |
-        +-----------+-------------+---------+
-                    |
-                    v
-                kv_dequant
-                    |
-                    v
-           Attention Compute
-               (future)
+SLOT_WIDTH = LINE_WIDTH / TOKENS_PER_LINE
 ```
 
 ---
 
-# Project Status
+# kv_quant Module
 
-| Component         | Status      |
-| ----------------- | ----------- |
-| kv_bank           | Implemented |
-| kv_cache          | Implemented |
-| kv_cache_top      | Implemented |
-| kv_dequant        | Implemented |
-| compute pipeline  | TODO        |
-| wrapper interface | TODO        |
-| testbench         | TODO        |
+`kv_quant` converts FP16 vectors into quantized representations.
+
+Current implementation is intentionally simple:
+
+```
+FP16 → passthrough
+INT8 → upper 8 bits of FP16
+INT4 → upper 4 bits of FP16
+scale = 1
+```
+
+This allows verifying the architecture without implementing full quantization logic.
+
+Future versions may include:
+
+```
+max abs reduction
+scale computation
+quantization multiply
+clamping
+```
 
 ---
 
-# Goal
+# Quantization Math (Future Implementation)
 
-Provide a **clean RTL model of a mixed-precision KV cache subsystem** that could be used inside an **LLM inference accelerator**.
+Typical quantization process:
 
-The design emphasizes:
+1. Compute max absolute value
 
-* modularity
-* parameterization
-* hardware realism
-* scalability across heads and tokens
+```
+max_val = max(|x_i|)
+```
+
+2. Compute scale
+
+```
+scale = max_val / QMAX
+```
+
+3. Quantize
+
+```
+q_i = round(x_i / scale)
+```
+
+4. Store
+
+```
+vector = q
+scale  = scale
+```
+
+During read:
+
+```
+x ≈ q * scale
+```
 
 ---
+
+# Testbench Design
+
+The testbench:
+
+```
+kv_cache_tb
+```
+
+performs deterministic testing.
+
+Steps:
+
+1. Reset system
+2. Write tokens sequentially
+3. Store reference vectors
+4. Issue read request
+5. Compare DUT output with reference
+
+The reference model **sign-extends quantized values** back to FP16 to verify correctness.
+
+Example for INT8:
+
+```
+q = 8-bit value
+
+ref = {{8{q[7]}}, q}
+```
+
+For INT4:
+
+```
+ref = {{12{q[3]}}, q}
+```
+
+---
+
+# Example Vector Packing
+
+HEAD_DIM = 2
+
+INT8 case:
+
+Input FP16:
+
+```
+0002 0001
+```
+
+Quantized vector:
+
+```
+00000201
+```
+
+Memory stores:
+
+```
+02 01
+```
+
+Read path reconstructs:
+
+```
+0002 0001
+```
+
+---
+
+# Design Properties
+
+The architecture provides:
+
+* mixed precision per head
+* per-token scaling
+* parameterizable head dimension
+* configurable token capacity
+* deterministic verification
+
+---
+
+# Possible Future Improvements
+
+## Real Quantization Logic
+
+Add:
+
+```
+max abs reduction
+scale calculation
+reciprocal multiplication
+clamping
+```
+
+## SRAM Optimization
+
+Store vectors in compressed form:
+
+```
+INT8 → 8 bits per element
+INT4 → 4 bits per element
+```
+
+instead of fixed FP16 layout.
+
+## Dequantization Hardware
+
+Add module:
+
+```
+kv_dequant
+```
+
+which reconstructs FP16 vectors during read.
+
+## Attention Engine Integration
+
+Full inference datapath:
+
+```
+token embedding
+      │
+attention compute
+      │
+kv_quant
+      │
+kv_cache
+      │
+attention read
+```
+
+---
+
+# Summary
+
+This project implements a **parameterizable mixed-precision KV cache architecture** suitable for transformer inference accelerators.
+
+Key features:
+
+* mixed precision per attention head
+* quantized KV storage
+* per-token scaling
+* modular architecture
+* synthesizable SystemVerilog
+
+The current implementation focuses on **architecture validation**, while future work can extend the quantization logic and integrate it into a full transformer inference pipeline.
