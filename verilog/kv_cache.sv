@@ -60,7 +60,7 @@ module kv_cache #(
         end
     end
 
-    assign rd_valid = active;
+    always_ff @(posedge clk) rd_valid <= active;
 
     // ---------------------------------------------------------
     // KV BANK INSTANCES (one per head)
@@ -69,32 +69,63 @@ module kv_cache #(
     genvar i;
 
     generate
-        for (i = 0; i < NUM_HEADS; i++) begin : HEAD_BANKS
+    for (i = 0; i < NUM_HEADS; i++) begin : HEAD_BANKS
 
-            kv_bank #(
-                .HEAD_DIM(HEAD_DIM),
-                .MAX_TOKENS(MAX_TOKENS),
-                .PRECISION(PRECISION[i])
-            ) bank_i (
+        localparam LINE_WIDTH = HEAD_DIM*16;
+        localparam TOKENS_PER_LINE =
+            (PRECISION[i]==0) ? 1 :
+            (PRECISION[i]==1) ? 2 :
+                                4;
+        localparam SLOT_WIDTH = LINE_WIDTH / TOKENS_PER_LINE;
 
-                .clk(clk),
-                .rst_n(rst_n),
+        logic [SLOT_WIDTH-1:0] bank_rd_vec;
 
-                // WRITE
-                .wr_valid (wr_valid),
-                .wr_token (wr_token),
-                .wr_vector(wr_vector[i]),
-                .wr_scale (wr_scale[i]),
+        kv_bank #( 
+            .HEAD_DIM(HEAD_DIM),
+            .MAX_TOKENS(MAX_TOKENS),
+            .PRECISION(PRECISION[i])
+        ) bank_i (
+            .clk(clk),
 
-                // READ
-                .rd_en   (active),
-                .rd_token(cur_token),
+            .wr_valid(wr_valid),
+            .wr_token(wr_token),
+            .wr_vector(wr_vector[i][SLOT_WIDTH-1:0]),
+            .wr_scale(wr_scale[i]),
 
-                .rd_vector(rd_vector[i]),
-                .rd_scale (rd_scale[i])
-            );
+            .rd_en(active),
+            .rd_token(cur_token),
 
+            .rd_vector(bank_rd_vec),
+            .rd_scale(rd_scale[i])
+        );
+ 
+        // -----------------------------
+        // Sign-extend bank read to full LINE_WIDTH
+        // -----------------------------
+        always_comb begin
+            case (PRECISION[i])
+                0: rd_vector[i] = bank_rd_vec; // FP16
+                1: begin // INT8 ? 16-bit
+                    int j;
+                    rd_vector[i] = '0;
+                    for (j = 0; j < HEAD_DIM; j=j+1) begin
+                        rd_vector[i][j*16 +: 16] =
+                            {{8{bank_rd_vec[j*8 +7]}}, bank_rd_vec[j*8 +: 8]};
+                    end
+                end
+                2: begin // INT4 ? 16-bit
+                    integer j;
+                    rd_vector[i] = '0;
+                    for (j = 0; j < HEAD_DIM; j=j+1) begin
+                        rd_vector[i][j*16 +: 16] =
+                            {{12{bank_rd_vec[j*4 +3]}}, bank_rd_vec[j*4 +: 4]};
+                    end
+                end
+                default: rd_vector[i] = bank_rd_vec;
+            endcase
         end
+
+    end
     endgenerate
 
 endmodule

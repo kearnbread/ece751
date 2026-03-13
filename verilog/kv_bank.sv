@@ -4,32 +4,41 @@ module kv_bank #(
     parameter PRECISION  = 0   // 0=FP16, 1=INT8, 2=INT4
 )(
     input  logic clk,
-    input  logic rst_n,
 
     // WRITE
     input  logic wr_valid,
     input  logic [$clog2(MAX_TOKENS)-1:0] wr_token,
-    input  logic [SLOT_WIDTH-1:0] wr_vector,
+    input  logic [(
+        (PRECISION==0) ? HEAD_DIM*16 :
+        (PRECISION==1) ? HEAD_DIM*8  :
+        (PRECISION==2) ? HEAD_DIM*4  :
+			 HEAD_DIM*16)
+        -1 : 0
+    ] wr_vector,
     input  logic [15:0] wr_scale,
 
     // READ
     input  logic rd_en,
     input  logic [$clog2(MAX_TOKENS)-1:0] rd_token,
-    output logic [SLOT_WIDTH-1:0] rd_vector,
+    output  logic [(
+        (PRECISION==0) ? HEAD_DIM*16 :
+        (PRECISION==1) ? HEAD_DIM*8  :
+        (PRECISION==2) ? HEAD_DIM*4  :
+			 HEAD_DIM*16)
+        -1 : 0
+    ] rd_vector,
     output logic [15:0] rd_scale
 );
-
-    // -----------------------------------------------------------------------
-    // Determine number of tokens per line and slot width
-    localparam LINE_WIDTH = HEAD_DIM*16;
+    localparam LINE_WIDTH = HEAD_DIM*16;	 
     localparam TOKENS_PER_LINE =
             (PRECISION==0) ? 1 :
             (PRECISION==1) ? 2 :
-                             4;
+            (PRECISION==2) ? 4 :
+                             1;
     localparam SLOT_WIDTH = LINE_WIDTH / TOKENS_PER_LINE;
-
     // Number of memory lines (ceil division)
     localparam NUM_LINES = (MAX_TOKENS + TOKENS_PER_LINE - 1) / TOKENS_PER_LINE;
+    localparam SLOT_BITS = (TOKENS_PER_LINE > 1) ? $clog2(TOKENS_PER_LINE) : 1;
 
     // -----------------------------------------------------------------------
     // Memory arrays
@@ -37,12 +46,16 @@ module kv_bank #(
     logic [15:0] scale_mem [0:NUM_LINES-1][0:TOKENS_PER_LINE-1];
 
     // Line and slot addresses
-    logic [$clog2(NUM_LINES)-1:0] wr_line, rd_line;
-    logic [$clog2(TOKENS_PER_LINE)-1:0] wr_slot, rd_slot;
+    logic [$clog2(NUM_LINES)-1:0] wr_line, rd_line; 
+    logic [SLOT_BITS-1:0] wr_slot, rd_slot;
 
     // -----------------------------------------------------------------------
     // Compute line and slot addresses using bit-shifts (no div/mod)
     always_comb begin
+        wr_line = '0;
+        wr_slot = '0;
+        rd_line = '0;
+        rd_slot = '0;
         case (PRECISION)
             0: begin // FP16, 1 token per line
                 wr_line = wr_token;
