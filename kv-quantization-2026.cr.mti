@@ -1,0 +1,84 @@
+C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_cache_top.sv {1 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache_top.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_cache_top
+
+Top level modules:
+	kv_cache_top
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_dequant.sv {1 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_dequant.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_dequant
+
+Top level modules:
+	kv_dequant
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_cache_tb2.sv {1 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache_tb2.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_cache_tb2
+
+Top level modules:
+	kv_cache_tb2
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_cache_top_tb.sv {1 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache_top_tb.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_cache_top_tb
+
+Top level modules:
+	kv_cache_top_tb
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_bank.sv {1 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_bank.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_bank
+
+Top level modules:
+	kv_bank
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_cache.sv {2 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_cache
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(107): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(110): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(111): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(111): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(113): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(118): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(119): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(119): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(121): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache.sv(124): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+
+Top level modules:
+	kv_cache
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_quant.sv {2 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_quant
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(33): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(36): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(44): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(52): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(52): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(54): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(63): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(63): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(65): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+** Warning: C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_quant.sv(70): (vlog-2583) [SVCHK] - Some checking for conflicts with always_comb and always_latch variables not yet supported. Run vopt to provide additional design-level checks.
+
+Top level modules:
+	kv_quant
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_bank_tb.sv {1 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_bank_tb.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_bank_tb
+
+Top level modules:
+	kv_bank_tb
+
+} {} {}} C:/Users/kearn/Downloads/ece751/project/kv-cache/kv_cache_tb.sv {1 {vlog -work work -sv -stats=none {C:\Users\kearn\Downloads\ece751\project\kv-cache\kv_cache_tb.sv}
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module kv_cache_tb
+
+Top level modules:
+	kv_cache_tb
+
+} {} {}}
